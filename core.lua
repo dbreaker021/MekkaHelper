@@ -23,6 +23,12 @@ local channel = {
     [3] = "RAID",
 }
 
+local soundSet = {
+    [1] = "音效",
+    [2] = "語音",
+    [3] = "音效+語音",
+}
+
 local backgrounds = {
     ["Interface\\ChatFrame\\ChatFrameBackground"] = "ChatFrameBackground",
     ["Interface\\DialogFrame\\UI-DialogBox-Background"] = "DialogBoxBackground"
@@ -87,7 +93,7 @@ local options = {
         f = { type = 'toggle', name = 'Alternar', desc = '翻轉UI', set = 'Flip', get = 'GetHorizontal', guiHidden = true },
 
         -- Horizontal
-        horizontal_gui = { type = 'toggle', name = 'Horizontal', desc = '水平/垂直', set = 'Flip', get = 'GetHorizontal', cmdHidden = true },
+        horizontal_gui = { type = 'toggle', name = 'Horizontal', desc = '水平/垂直', set = 'Flip', get = 'GetHorizontal', cmdHidden = true, order = 21 },
         horizontal = { type = 'toggle', name = 'Horizontal', desc = '調整UI為水平顯示', set = 'SetHorizontal', get = 'GetHorizontal', guiHidden = true },
         hor = { type = 'toggle', name = 'Horizontal', desc = '調整UI為水平顯示', set = 'SetHorizontal', get = 'GetHorizontal', guiHidden = true },
 
@@ -100,7 +106,14 @@ local options = {
         --t = { type = 'toggle', name = 'Mostrar/Esconder', desc = 'Mostra/Esconde o MekkaHelper.', set = 'ToggleHidden', get = 'IsHidden', guiHidden = true },
 
         -- Scale
-        scale = { type = 'range', name = 'scale', desc = 'UI大小', set = 'SetScale', get = 'GetScale', min = 0.1, max = 5.0, cmdHidden = true },
+        scale = { type = 'range', name = 'scale', desc = 'UI大小', set = 'SetScale', get = 'GetScale', min = 0.1, max = 5.0, cmdHidden = true, order = 22 },
+		
+		
+		-------------------------------------------------------------------------
+        -- SOUND
+        -------------------------------------------------------------------------
+		 sound_header = { type = 'header', name = '音效', order = 30 },
+		 soundset = { type = 'select', name = 'Sound', desc = '音效', style = 'dropdown', set = 'SetSound', get = 'GetSound', values = soundSet, cmdHidden = true, order = 31 },
     },
 }
 
@@ -246,6 +259,14 @@ end
 
 function MekkaHelper:SetChatRaid(info, input)
     MekkaHelper:ChatRaid()
+end
+
+function MekkaHelper:SetSound(info, input)
+    self.db.char.mksound = input
+end
+
+function MekkaHelper:GetSound(info, input)
+    return self.db.char.mksound
 end
 
 --------------------------------------------------------------------------------
@@ -454,6 +475,12 @@ function MekkaHelper:LoadSettings()
     else
         MekkaHelper:BackgroundColor(0, 0, 0, 0.3)
     end
+	
+	--Set sound
+	if not self.db.char.mksound then
+		self.db.char.mksound = 1
+	end
+		
 end
 
 --------------------------------------------------------------------------------
@@ -492,12 +519,19 @@ end
 local events = CreateFrame('Frame');
 events:RegisterEvent('CHAT_MSG_ADDON');
 events:RegisterEvent('UNIT_SPELLCAST_SUCCEEDED');
-events:UnregisterEvent('UNIT_ENTERED_VEHICLE');
+events:RegisterEvent('UNIT_ENTERED_VEHICLE');
 events:SetScript('OnEvent', function(self, event, ...) return self[event](self, event, ...); end);
 
 function events:CHAT_MSG_ADDON(_, event, i)
 	if event == "MekkaHelper" then
-		PlaySoundFile("Sound\\Spells\\LevelUp.ogg")
+		if MekkaHelper:GetSound() == 1 then
+			PlaySoundFile("Sound\\Spells\\LevelUp.ogg")
+		elseif MekkaHelper:GetSound() == 2 then
+			PlaySoundFile("Interface\\Addons\\MekkaHelper\\sounds\\" .. i .. ".mp3")
+		else
+			PlaySoundFile("Sound\\Spells\\LevelUp.ogg")
+			PlaySoundFile("Interface\\Addons\\MekkaHelper\\sounds\\" .. i .. ".mp3")
+		end
 		MK_FRAME.icon:SetImage("INTERFACE/ICONS/spell_mekkatorque_bot_" .. array[tonumber(i)])
 		MK_FRAME.icon:SetLabel(i)
 	end
@@ -505,8 +539,7 @@ end
 
 function events:UNIT_SPELLCAST_SUCCEEDED(_, unit, _, spellID)
     local spellID = tonumber(spellID);
-
-    if unit == 'player' then
+    if unit == 'player' or unit == 'pet' then
         for i = 1, 5 do
             if spellID == spellData[i].spellID then
                 MK_FRAME.icon:SetImage("INTERFACE/ICONS/Inv_misc_questionmark")
