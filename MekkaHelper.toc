@@ -1,0 +1,14 @@
+## Interface: 80100
+## Title: MekkaHelper
+## Author: DB
+## Notes: Mekkatorque Helper Modify from MekkaTarget by Focs-Goldrinn US
+## Version: v1.5
+## SavedVariables: MekkaHelperDB
+
+libs/LibStub/LibStub.lua
+libs/CallbackHandler-1.0/CallbackHandler-1.0.lua
+
+embeds.xml
+
+widgets/AceGUIWidget-MekkaHelperFrame.lua
+core.lua
